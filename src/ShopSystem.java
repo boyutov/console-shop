@@ -1,5 +1,3 @@
-import javax.lang.model.type.ArrayType;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -11,11 +9,12 @@ public class ShopSystem {
     private ArrayList<Post> allPosts = new ArrayList<>();
     private ArrayList<Order> allOrders = new ArrayList<>();
     private ArrayList<Product> products = new ArrayList<>();
+    private ArrayList<String> catalogs = new ArrayList<>();
     public static String role;
 
     public void processCommand(String command) {
-        String[] parts = command.split("\\s+");
-        String cmd = parts[0];
+        Scanner scanner = new Scanner(System.in);
+        String cmd = command.trim(); // Убираем пробелы, аргументы не нужны
 
         switch (cmd) {
             case "help":
@@ -23,22 +22,19 @@ public class ShopSystem {
                 break;
 
             case "register":
-                Scanner scanner = new Scanner(System.in);
-                System.out.println("Введите роль: Покупатель, Продавец, Поставщик.");
-                role = scanner.nextLine();
-
+                System.out.println("Введите роль: Покупатель, Продавец, Поставщик");
+                role = scanner.nextLine().toLowerCase();
                 registerUser(role);
                 break;
 
             case "login":
-                Scanner scanner1 = new Scanner(System.in);
-                System.out.println("Введите роль: Покупатель, Продавец, Поставщик.");
-                role = scanner1.nextLine();
+                System.out.println("Введите роль: Покупатель, Продавец, Поставщик");
+                role = scanner.nextLine().toLowerCase();
                 System.out.println("Введите пароль: ");
-                String password = scanner1.nextLine();
+                String password = scanner.nextLine();
                 System.out.println("Введите имя: ");
-                String username = scanner1.nextLine();
-                loginUser(role, password, username);
+                String name = scanner.nextLine();
+                loginUser(role, password, name);
                 break;
 
             case "get_all_users":
@@ -59,62 +55,76 @@ public class ShopSystem {
                 break;
 
             case "user_by_param":
-                if (parts.length < 3) {
-                    System.out.println("Укажите параметр: login, name, id и значение");
-                    return;
-                }
-                findUserByParam(parts[1], parts[2]);
+                System.out.println("Введите параметр (login, name, id): ");
+                String param = scanner.nextLine();
+                System.out.println("Введите значение: ");
+                String value = scanner.nextLine();
+                findUserByParam(param, value);
                 break;
 
             // Команды поставщика
             case "add_item":
-                checkProviderCommand(parts, () -> {
-                    String name = parts[1];
-                    double price = Double.parseDouble(parts[2]);
-                    int quantity = Integer.parseInt(parts[3]);
-                    ((Provider) currentUser).addItem(name, price, quantity);
-                    allItems.add(new Item(name, price, quantity, (Provider) currentUser));
-                }, "add_item <name> <price> <quantity>");
+                if (!checkProvider()) return;
+                System.out.println("Введите название товара: ");
+                String itemName = scanner.nextLine();
+                System.out.println("Введите цену: ");
+                double price = Double.parseDouble(scanner.nextLine());
+                System.out.println("Введите количество: ");
+                int quantity = Integer.parseInt(scanner.nextLine());
+                ((Provider) currentUser).addItem(itemName, price, quantity);
+                allItems.add(new Item(itemName, price, quantity, (Provider) currentUser));
                 break;
+
             case "add_shop":
-                checkProviderCommand(parts, () -> {
-                    String shopName = parts[1];
-                    String address = parts[2];
-                    ((Provider) currentUser).addShop(shopName, address);
-                    allShops.add(new Shop(shopName, address));
-                }, "add_shop <name> <address>");
+                if (!checkProvider()) return;
+                System.out.println("Введите название магазина: ");
+                String shopName = scanner.nextLine();
+                System.out.println("Введите адрес: ");
+                String address = scanner.nextLine();
+                ((Provider) currentUser).addShop(shopName, address);
+                allShops.add(new Shop(shopName, address));
                 break;
+
             case "info_shops":
-                checkProviderCommand(parts, () -> ((Provider) currentUser).infoShops(), null);
+                if (!checkProvider()) return;
+                ((Provider) currentUser).infoShops();
                 break;
+
             case "info_items":
-                checkProviderCommand(parts, () -> ((Provider) currentUser).infoItems(), null);
+                if (!checkProvider()) return;
+                ((Provider) currentUser).infoItems();
                 break;
+
             case "update_item":
-                checkProviderCommand(parts, () -> {
-                    String name = parts[1];
-                    double newPrice = Double.parseDouble(parts[2]);
-                    int newQuantity = Integer.parseInt(parts[3]);
-                    ((Provider) currentUser).updateItem(name, newPrice, newQuantity);
-                }, "update_item <name> <newPrice> <newQuantity>");
+                if (!checkProvider()) return;
+                System.out.println("Введите название товара: ");
+                String updateName = scanner.nextLine();
+                System.out.println("Введите новую цену: ");
+                double newPrice = Double.parseDouble(scanner.nextLine());
+                System.out.println("Введите новое количество: ");
+                int newQuantity = Integer.parseInt(scanner.nextLine());
+                ((Provider) currentUser).updateItem(updateName, newPrice, newQuantity);
                 break;
+
             case "add_post":
-                checkProviderCommand(parts, () -> {
-                    String content = parts[1];
-                    String tag = parts[2];
-                    ((Provider) currentUser).addPost(content, tag);
-                    allPosts.add(new Post(content, tag, currentUser));
-                }, "add_post <content> <tag>");
+                if (!checkProvider()) return;
+                System.out.println("Введите содержание поста: ");
+                String content = scanner.nextLine();
+                System.out.println("Введите тег: ");
+                String tag = scanner.nextLine();
+                ((Provider) currentUser).addPost(content, tag);
+                allPosts.add(new Post(content, tag, currentUser));
                 break;
+
             case "all_shop":
-                checkProviderCommand(parts, () -> ((Provider) currentUser).allShop(), null);
+                if (!checkProvider()) return;
+                ((Provider) currentUser).allShop();
                 break;
+
             case "shop_by_id":
-                if (parts.length < 2) {
-                    System.out.println("Укажите ID магазина");
-                    return;
-                }
-                int shopId = Integer.parseInt(parts[1]);
+                if (!checkProvider()) return;
+                System.out.println("Введите ID магазина: ");
+                int shopId = Integer.parseInt(scanner.nextLine());
                 Shop shop = findShopById(shopId);
                 if (shop != null) {
                     System.out.println("Магазин: " + shop.getName() + ", адрес: " + shop.getAddress());
@@ -122,12 +132,14 @@ public class ShopSystem {
                     System.out.println("Магазин не найден");
                 }
                 break;
+
             case "shops_by_parameter":
-                if (parts.length < 3) {
-                    System.out.println("Укажите параметр и значение");
-                    return;
-                }
-                ArrayList<Shop> shops = findShopsByParam(parts[1], parts[2]);
+                if (!checkProvider()) return;
+                System.out.println("Введите параметр (name, address): ");
+                String shopParam = scanner.nextLine();
+                System.out.println("Введите значение: ");
+                String shopValue = scanner.nextLine();
+                ArrayList<Shop> shops = findShopsByParam(shopParam, shopValue);
                 if (shops.isEmpty()) {
                     System.out.println("Магазины не найдены");
                 } else {
@@ -139,94 +151,140 @@ public class ShopSystem {
 
             // Команды продавца
             case "all_items":
-                checkSalesmanCommand(parts, () -> ((Salesman) currentUser).allItems(products), null);
+                if (!checkSalesman()) return;
+                ((Salesman) currentUser).allItems(products);
+                break;
+
+            case "add_catalogs":
+                if (!checkSalesman()) return;
+                System.out.println("Введите название нового каталога: ");
+                String catalogName = scanner.nextLine();
+                if (catalogs.contains(catalogName)) {
+                    System.out.println("Каталог с таким названием уже существует.");
+                } else {
+                    catalogs.add(catalogName);
+                    System.out.println("Каталог \"" + catalogName + "\" добавлен.");
+                }
                 break;
 
             case "all_shops":
-                checkSalesmanCommand(parts, () -> ((Salesman) currentUser).allShops(allShops), null);
+                if (!checkSalesman()) return;
+                ((Salesman) currentUser).allShops(allShops);
                 break;
 
             case "add_product":
-            checkSalesmanCommand(parts, () -> {products.add(new Product(((Salesman) currentUser).add_product());}, "add_product");
-            break;
+                if (!checkSalesman()) return;
+                System.out.println("Введите название продукта: ");
+                String productName = scanner.nextLine();
+                System.out.println("Введите цену: ");
+                double productPrice = Double.parseDouble(scanner.nextLine());
+                System.out.println("Введите количество: ");
+                int productQuantity = Integer.parseInt(scanner.nextLine());
+                products.add(new Product(productName, productPrice, productQuantity));
+                ((Salesman) currentUser).add_product(productName, productQuantity);
+                break;
 
             case "all_orders":
-                checkSalesmanCommand(parts, () -> ((Salesman) currentUser).allOrders(allOrders), null);
+                if (!checkSalesman()) return;
+                ((Salesman) currentUser).allOrders(allOrders);
                 break;
+
             case "info_shop":
-                checkSalesmanCommand(parts, () -> {
-                    int id = Integer.parseInt(parts[1]);
-                    ((Salesman) currentUser).infoShop(findShopById(id));
-                }, "info_shop <id>");
+                if (!checkSalesman()) return; // Проверяем, что пользователь — продавец
+                ((Salesman) currentUser).infoShop();
                 break;
+
             case "all_provider":
-                checkSalesmanCommand(parts, () -> ((Salesman) currentUser).allProviders(users), null);
+                if (!checkSalesman()) return;
+                ((Salesman) currentUser).allProviders(users);
                 break;
+
             case "search_provider":
-                checkSalesmanCommand(parts, () -> {
-                    String param = parts[1];
-                    String value = parts[2];
-                    ((Salesman) currentUser).searchProvider(users, param, value);
-                }, "search_provider <param> <value>");
+                if (!checkSalesman()) return;
+                System.out.println("Введите параметр (login, name, id): ");
+                String providerParam = scanner.nextLine();
+                System.out.println("Введите значение: ");
+                String providerValue = scanner.nextLine();
+                ((Salesman) currentUser).searchProvider(users, providerParam, providerValue);
                 break;
+
             case "all_news_posts":
-                checkSalesmanCommand(parts, () -> ((Salesman) currentUser).allNewsPosts(allPosts), null);
+                if (!checkSalesman()) return;
+                ((Salesman) currentUser).allNewsPosts(allPosts);
                 break;
+
             case "posts_by_login":
-                checkSalesmanCommand(parts, () -> {
-                    String login = parts[1];
-                    ((Salesman) currentUser).postsByLogin(allPosts, login);
-                }, "posts_by_login <login>");
+                if (!checkSalesman()) return;
+                System.out.println("Введите логин: ");
+                String login = scanner.nextLine();
+                ((Salesman) currentUser).postsByLogin(allPosts, login);
                 break;
+
             case "posts_by_id":
-                checkSalesmanCommand(parts, () -> {
-                    int postId = Integer.parseInt(parts[1]);
-                    ((Salesman) currentUser).postsById(allPosts, postId);
-                }, "posts_by_id <id>");
+                if (!checkSalesman()) return;
+                System.out.println("Введите ID поста: ");
+                int postId = Integer.parseInt(scanner.nextLine());
+                ((Salesman) currentUser).postsById(allPosts, postId);
                 break;
+
             case "posts_by_tag":
-                checkSalesmanCommand(parts, () -> {
-                    String tag = parts[1];
-                    ((Salesman) currentUser).postsByTag(allPosts, tag);
-                }, "posts_by_tag <tag>");
+                if (!checkSalesman()) return;
+                System.out.println("Введите тег: ");
+                String postTag = scanner.nextLine();
+                ((Salesman) currentUser).postsByTag(allPosts, postTag);
                 break;
+
             case "update_items":
-                checkSalesmanCommand(parts, () -> {
-                    String name = parts[1];
-                    double newPrice = Double.parseDouble(parts[2]);
-                    int newQuantity = Integer.parseInt(parts[3]);
-                    ((Salesman) currentUser).updateItem(allItems, name, newPrice, newQuantity);
-                }, "update_item <name> <newPrice> <newQuantity>");
+                if (!checkSalesman()) return;
+                System.out.println("Введите название товара: ");
+                String itemNameUpdate = scanner.nextLine();
+                System.out.println("Введите новую цену: ");
+                double newItemPrice = Double.parseDouble(scanner.nextLine());
+                System.out.println("Введите новое количество: ");
+                int newItemQuantity = Integer.parseInt(scanner.nextLine());
+                ((Salesman) currentUser).updateItem(allItems, itemNameUpdate, newItemPrice, newItemQuantity);
                 break;
+
             case "make_request":
-                checkSalesmanCommand(parts, () -> {
-                    String itemName = parts[1];
-                    int quantity = Integer.parseInt(parts[2]);
-                    ((Salesman) currentUser).makeRequest(itemName, quantity);
-                }, "make_request <itemName> <quantity>");
+                if (!checkSalesman()) return;
+                System.out.println("Введите название товара: ");
+                String requestItem = scanner.nextLine();
+                System.out.println("Введите количество: ");
+                int requestQuantity = Integer.parseInt(scanner.nextLine());
+                ((Salesman) currentUser).makeRequest(requestItem, requestQuantity);
                 break;
 
             // Команды покупателя
             case "all_salesman":
-                checkCustomerCommand(parts, () -> ((Customer) currentUser).allSalesmen(users), null);
+                if (!checkCustomer()) return;
+                ((Customer) currentUser).allSalesmen(users);
                 break;
+
             case "catalogs":
-                checkCustomerCommand(parts, () -> ((Customer) currentUser).viewCatalogs(products), null);
+                if (!checkCustomer()) return;
+                ((Customer) currentUser).viewCatalogs(products);
                 break;
+
             case "set_item":
-                checkCustomerCommand(parts, () -> {
-                    String itemName = parts[1];
-                    ((Customer) currentUser).setItem(allItems, itemName);
-                }, "set_item <itemName>");
+                if (!checkCustomer()) return;
+                System.out.println("Введите название товара: ");
+                String setItemName = scanner.nextLine();
+                ((Customer) currentUser).setItem(allItems, setItemName);
                 break;
+
             case "cart":
-                checkCustomerCommand(parts, () -> ((Customer) currentUser).viewCart(), null);
+                if (!checkCustomer()) return;
+                ((Customer) currentUser).viewCart();
                 break;
+
             case "check_cart":
-                checkCustomerCommand(parts, () -> ((Customer) currentUser).checkout(allOrders), null);
+                if (!checkCustomer()) return;
+                ((Customer) currentUser).checkout(allOrders);
                 break;
+
             case "orders":
-                checkCustomerCommand(parts, () -> ((Customer) currentUser).viewOrders(), null);
+                if (!checkCustomer()) return;
+                ((Customer) currentUser).viewOrders();
                 break;
 
             default:
@@ -242,11 +300,11 @@ public class ShopSystem {
                     System.out.println("Общие команды: exit, help, register, login, get_all_users, info, logout, user_by_param");
                 }
                 case Salesman salesman -> {
-                    System.out.println("Команды продавца: all_items, all_shops, add_product, all_orders, info_shop, all_provider, search_provider, all_news_posts, add_post, posts_by_login, posts_by_id, posts_by_tag, update_item, make_request");
+                    System.out.println("Команды продавца: all_items, all_shops, add_product, all_orders, info_shop, all_provider, search_provider, all_news_posts, posts_by_login, posts_by_id, posts_by_tag, update_items, make_request, add_catalogs");
                     System.out.println("Общие команды: exit, help, register, login, get_all_users, info, logout, user_by_param");
                 }
                 case Customer customer -> {
-                    System.out.println("Команды покупателя: all_items, all_shops, all_salesman, catalogs, set_item, cart, check_cart, orders, all_news_posts");
+                    System.out.println("Команды покупателя: all_items, all_shops, all_salesman, catalogs, set_item, cart, check_cart, orders");
                     System.out.println("Общие команды: exit, help, register, login, get_all_users, info, logout, user_by_param");
                 }
                 case null, default ->
@@ -257,61 +315,36 @@ public class ShopSystem {
         }
     }
 
-    private void checkProviderCommand(String[] parts, Runnable action, String usage) {
+    private boolean checkProvider() {
         if (currentUser == null || !(currentUser instanceof Provider)) {
-            System.out.println("Команда для поставщиков");
-            return;
+            System.out.println("Эта команда только для поставщиков. Войдите как поставщик.");
+            return false;
         }
-        if (usage != null && parts.length < usage.split("\\s+").length) {
-            System.out.println("Использование: " + usage);
-            return;
-        }
-        try {
-            action.run();
-        } catch (Exception e) {
-            System.out.println("Ошибка ввода: " + e.getMessage());
-        }
+        return true;
     }
 
-    private void checkSalesmanCommand(String[] parts, Runnable action, String usage) {
+    private boolean checkSalesman() {
         if (currentUser == null || !(currentUser instanceof Salesman)) {
-            System.out.println("Команда для продавцов");
-            return;
+            System.out.println("Эта команда только для продавцов. Войдите как продавец.");
+            return false;
         }
-        if (usage != null && parts.length < usage.split("\\s+").length) {
-            System.out.println("Использование: " + usage);
-            return;
-        }
-        try {
-            action.run();
-        } catch (Exception e) {
-            System.out.println("Ошибка ввода: " + e.getMessage());
-        }
+        return true;
     }
 
-    private void checkCustomerCommand(String[] parts, Runnable action, String usage) {
+    private boolean checkCustomer() {
         if (currentUser == null || !(currentUser instanceof Customer)) {
-            System.out.println("Команда для покупателей");
-            return;
+            System.out.println("Эта команда только для покупателей. Войдите как покупатель.");
+            return false;
         }
-        if (usage != null && parts.length < usage.split("\\s+").length) {
-            System.out.println("Использование: " + usage);
-            return;
-        }
-        try {
-            action.run();
-        } catch (Exception e) {
-            System.out.println("Ошибка ввода: " + e.getMessage());
-        }
+        return true;
     }
 
     private void registerUser(String role) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Пароль: ");
+        System.out.println("Введите пароль: ");
         String password = scanner.nextLine();
-        System.out.println("Имя: ");
+        System.out.println("Введите имя: ");
         String name = scanner.nextLine();
-        role = role.toLowerCase();
 
         User user;
         switch (role) {
@@ -325,7 +358,7 @@ public class ShopSystem {
                 user = new Provider(role, password, name);
                 break;
             default:
-                System.out.println("Неверная роль");
+                System.out.println("Неверная роль. Используйте: Покупатель, Продавец, Поставщик");
                 return;
         }
         users.add(user);
@@ -334,32 +367,40 @@ public class ShopSystem {
 
     private void loginUser(String login, String password, String name) {
         for (User user : users) {
-            if (user.getLogin().equals(login.toLowerCase()) && user.getPassword().equals(password) && user.getName().equals(name)) {
+            if (user.getLogin().equals(login) && user.getPassword().equals(password) && user.getName().equals(name)) {
                 currentUser = user;
                 System.out.println("Вход выполнен: " + login);
                 return;
             }
         }
-        System.out.println("Неверный логин или пароль");
+        System.out.println("Неверные данные для входа");
     }
 
     private void printAllUsers() {
         if (users.isEmpty()) {
             System.out.println("Пользователей нет");
         } else {
+            System.out.println("Список всех пользователей:");
+            System.out.printf("%-5s %-15s %-15s%n", "ID", "Имя", "Роль");
             for (User user : users) {
-                System.out.println(user.getLogin() + " - " + user.getRole());
+                System.out.printf("%-5d %-15s %-15s%n",
+                        user.getId(), user.getName(), user.getRole());
             }
         }
     }
 
     private void findUserByParam(String param, String value) {
+        boolean found = false;
         for (User user : users) {
             if ((param.equals("login") && user.getLogin().equals(value)) ||
                     (param.equals("name") && user.getName().equals(value)) ||
                     (param.equals("id") && String.valueOf(user.getId()).equals(value))) {
                 System.out.println(user.getLogin() + " - " + user.getRole());
+                found = true;
             }
+        }
+        if (!found) {
+            System.out.println("Пользователь не найден");
         }
     }
 

@@ -3,6 +3,7 @@ import java.util.Scanner;
 
 public class Salesman extends User {
     private ArrayList<Product> managedCatalogs = new ArrayList<>();
+    private Shop shop;
 
     public Salesman(String login, String password, String name) {
         super(login, password, name);
@@ -13,18 +14,38 @@ public class Salesman extends User {
         return "Продавец";
     }
 
+    public void setShop(Shop shop) {
+        this.shop = shop;
+    }
+
     @Override
     public void info() {
         System.out.println("Продавец: " + getName() + ", ID: " + getId());
+    }
+
+    public void add_product(String name, int quantity) {
+        System.out.println("Продукт добавлен: " + name + ", количество: " + quantity);
+    }
+
+    public void infoShop() {
+        if (shop == null) {
+            System.out.println("У вас нет назначенного магазина.");
+        } else {
+            System.out.println("Информация о магазине:");
+            System.out.println("Имя магазина: " + shop.getName());
+            System.out.println("Адрес: " + shop.getAddress());
+            System.out.println("Общее количество товаров: " + shop.getItemCount());
+            System.out.println("Количество сотрудников: " + shop.getEmployeeCount());
+            System.out.println("Средняя выручка: " + shop.getAverageRevenue());
+        }
     }
 
     public void allItems(ArrayList<Product> products) {
         if (products.isEmpty()) {
             System.out.println("Товаров нет");
         } else {
-            System.out.println("Все товары:");
-            for (Product product : products) {
-                System.out.println(" - " + product.getName() + ", цена: " + product.getPrice());
+            for (Product p : products) {
+                System.out.println(" - " + p.getName() + ", цена: " + p.getPrice());
             }
         }
     }
@@ -38,19 +59,6 @@ public class Salesman extends User {
                 System.out.println(" - " + shop.getName() + ", адрес: " + shop.getAddress());
             }
         }
-    }
-
-    public String add_product() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Введите название товара: ");
-        String name = scanner.nextLine();
-        System.out.println("Введите цену товара: ");
-        Double price = scanner.nextDouble();
-        Product product = new Product(name, price);
-        managedCatalogs.add(product);
-        System.out.println("Каталог " + name + " добавлен");
-        String string = price.toString();
-        return name;
     }
 
     public void allOrders(ArrayList<Order> allOrders) {
