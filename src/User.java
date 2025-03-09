@@ -1,33 +1,24 @@
 public abstract class User {
+    private static int nextId = 1;
+    private int id;
     private String login;
     private String password;
     private String name;
-    private int id;
-    private static int nextId = 1;
+    private String role;
 
-    public User(String login, String password, String name) {
+    public User(String login, String password, String name, String role) {
+        this.id = nextId++;
         this.login = login;
         this.password = password;
         this.name = name;
-        this.id = nextId++;
+        this.role = role;
     }
 
-    public String getLogin() {
-        return login;
-    }
+    public int getId() { return id; }
+    public String getLogin() { return login; }
+    public String getPassword() { return password; }
+    public String getName() { return name; }
+    public String getRole() { return role; }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public abstract String getRole();
     public abstract void info();
 }

@@ -1,8 +1,8 @@
 import java.util.ArrayList;
 
 public class Order {
-    private int id;
     private static int nextId = 1;
+    private int id;
     private Customer customer;
     private ArrayList<Item> items;
 
